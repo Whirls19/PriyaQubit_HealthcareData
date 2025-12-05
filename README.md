@@ -1,72 +1,108 @@
-PROJECT REPORT: Strategic Analysis of CMS Inpatient Healthcare Costs (2025)
+# 🏥 Hospital Bed Utilization & Revenue Optimization System
 
-Prepared By: Aman
-Team Members: Aditi, Palak, Shalini
-Date: November 27, 2025
-Data Source: CMS Medicare Provider Utilization and Payment Data (Inpatient)
+![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
+![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
+![Tableau](https://img.shields.io/badge/Tableau-Dashboard-orange)
+![Machine Learning](https://img.shields.io/badge/ML-Gradient%20Boosting-green)
 
-1. Executive Summary
+> **A Full-Stack Data Science Project optimizing hospital throughput and financial efficiency using Machine Learning and Business Intelligence.**
 
-This report presents a comprehensive analysis of over 146,000 inpatient records from the Centers for Medicare & Medicaid Services (CMS). The objective was to identify major cost drivers, operational inefficiencies, and billing disparities across the United States healthcare system.
+---
 
-Our analysis reveals a significant "Markup Crisis," where specific hospitals charge up to 5x the Medicare reimbursement rate. Additionally, we identified Nevada (NV) as the most expensive state for inpatient care, averaging $157,565 per claim. We also successfully implemented a high-performance Python data pipeline, reducing data processing time by approximately 15x compared to legacy SQL methods.
+## 📋 Table of Contents
+- [Executive Summary](#-executive-summary)
+- [Data Source](#-data-source)
+- [Project Architecture](#-project-architecture)
+- [Key Features](#-key-features)
+- [Tech Stack](#-tech-stack)
+- [Installation & Setup](#-installation--setup)
+- [Usage Guide](#-usage-guide)
+- [Team](#-team)
 
-2. Technical Architecture & Optimization
+---
 
-2.1 The Strategic Pivot to Python Automation: To ensure data accuracy and repeatability for the 146,000+ records, the team moved away from manual Excel processing to an Automated Python Pipeline. This approach eliminates human error and allows for instant re-analysis if the source data changes.
+## 🚀 Executive Summary
+Hospital "Bed Blocking"—patients staying longer than medically necessary—causes severe bottlenecks in patient flow and significant revenue leakage. 
 
-2.2 Optimization Results (Team Lead Initiative): As the Team Lead, I developed a modular Python script to handle the end-to-end analysis.
+This project analyzes patient discharge records to identify operational inefficiencies. We developed an end-to-end solution combining a **Gradient Boosting Machine Learning Model** to predict the "Medically Necessary Length of Stay" (LOS) with an interactive **Command Center Dashboard** to visualize the financial impact of excess stays.
 
-Reproducibility: The analysis, which previously required hours of manual filtering, can now be executed in seconds using the script.
+**Key Goals:**
+* Predict patient discharge dates with high precision.
+* Quantify the "Opportunity Cost" of occupied beds.
+* Identify specific diagnoses and admission types driving the backlog.
 
-Data Integrity: Implemented programmatic checks to ensure no negative billing amounts or missing state data were included in the final report.
+---
 
-Scalability: The script is designed to handle next year's CMS data release without any code changes.
+## 💾 Data Source
+This project utilizes the **Hospital Inpatient Discharges (SPARCS)** dataset, provided by the **New York State Department of Health**.
 
-3. Key Findings & Data Analysis
+* **Dataset Name:** Statewide Planning and Research Cooperative System (SPARCS) De-Identified Data.
+* **Description:** Contains patient-level detail on patient characteristics, diagnoses, treatments, services, and charges for every hospital discharge in New York State.
+* **Access:** The raw data is publicly available at [Health.data.ny.gov](https://health.data.ny.gov/Health/Hospital-Inpatient-Discharges-SPARCS-De-Identified/u4ud-w55t).
 
-3.1 Financial Analysis: The "Markup Crisis"
+> **Note:** Due to file size limits (>1GB), the raw data is not included in this repository. A processed sample (`hospital_data_30pct.csv`) is provided for demonstration purposes.
 
-Our analysis identified a massive disparity between what hospitals bill and what Medicare actually pays.
+---
 
-Average Markup: On average, hospitals charge $40,000 more than the allowable Medicare payment per case.
+## 🏗 Project Architecture
 
-Top Cost Driver: CAR T-CELL Immunotherapy (Code 018) is the single most expensive procedure, with an average bill of $2.02 Million per case.
+The solution follows a linear data pipeline:
 
-Extreme Outliers: Specific hospitals, such as UPMC Presbyterian Shadyside, showed markups exceeding $9 Million for specialized treatments.
-<img width="4160" height="2373" alt="1_1_hospital_markup" src="https://github.com/user-attachments/assets/d95feaa5-5178-4d56-b4e3-7e22468677b5" />
-<img width="4134" height="2373" alt="1_2_expensive_procedures" src="https://github.com/user-attachments/assets/9b258279-d929-435f-8047-b5eb28067198" />
+1.  **Data Ingestion:** Loading raw regulatory data containing patient demographics, APR-DRG diagnoses, and financial metrics.
+2.  **ETL & Engineering:** Cleaning data, handling outliers, and creating features like `Severity_Risk_Interaction` and `Group_Statistics`.
+3.  **Machine Learning:** Training a **Gradient Boosting Regressor** to predict the expected Length of Stay.
+4.  **Logic Layer:** Calculating `Variance` (Actual - Predicted) and flagging `Bed_Blockers` based on statistical thresholds.
+5.  **Deployment:**
+    * **Tableau:** For strategic executive reporting and root cause analysis.
+    * **Streamlit:** For real-time clinical prediction and scenario planning.
 
-3.2 Geographic Trends: The West Coast Premium
+---
 
-Geographic analysis indicates a strong "West Coast Premium" on healthcare costs, largely driven by higher operational costs and billing practices in specific states.
+## ✨ Key Features
 
-Most Expensive State: Nevada (NV) ($157k avg bill).
+### 1. AI-Powered Discharge Predictor
+A generic ML model that estimates the target discharge date for incoming patients.
+* **Input:** Age, Diagnosis, Severity, Admission Type.
+* **Output:** Predicted Stay & Risk Alert (Low/Medium/High).
+* **Safety Layer:** Includes clinical overrides for "Extreme" severity cases to ensure patient safety.
 
-Second Most Expensive: California (CA) ($151k avg bill).
+### 2. The "Command Center" Dashboard (Tableau)
+An interactive dashboard answering three critical business questions:
+* **Executive View:** Visualizes total revenue opportunity and wasted bed days.
+* **Clinical View:** Drills down into specific diagnoses (e.g., Septicemia, Heart Failure) causing delays.
+* **Technical View:** Validates model performance by comparing Predicted vs. Actual stays.
 
-Healthcare Hubs: New York, NY emerged as the highest-volume healthcare hub, processing the largest number of discharges in the nation.
+### 3. "What-If" Simulation Engine
+A dynamic parameter tool allowing stakeholders to calculate ROI by adjusting efficiency targets (e.g., *"What if we reduce variance by 10%?"*).
 
-<img width="4158" height="2373" alt="2_1_expensive_states" src="https://github.com/user-attachments/assets/241e7b1f-3eb4-4dde-afd7-fad702d80488" />
+---
 
-3.3 Operational Volume: The Burden of Disease
+## 🛠 Tech Stack
 
-We analyzed patient volume to understand the primary demands on the US healthcare system.
+* **Language:** Python 3.10+
+* **Data Processing:** Pandas, NumPy
+* **Machine Learning:** Scikit-Learn (Gradient Boosting Regressor, LabelEncoder)
+* **Visualization:** Tableau Public (Embedded), Streamlit
+* **Database:** SQL (Data storage & Audit queries)
 
-#1 Cause of Hospitalization: Septicemia (Sepsis) accounts for the highest volume of discharges, highlighting the critical burden of infection management.
+---
 
-#2 Cause: Heart Failure follows closely, indicating a prevalent cardiovascular health crisis.
-<img width="4180" height="2972" alt="3_1_common_conditions" src="https://github.com/user-attachments/assets/abdd5209-c1ac-472b-b893-f451e90e1297" />
+## ⚙ Installation & Setup
 
+1.  **Clone the Repository**
+    ```bash
+    git clone [https://github.com/your-username/hospital-optimization.git](https://github.com/your-username/hospital-optimization.git)
+    cd hospital-optimization
+    ```
 
-3.4 Economic Correlations: Volume vs. Price
+2.  **Install Dependencies**
+    ```bash
+    pip install -r requirements.txt
+    ```
 
-A statistical correlation analysis was performed to test the hypothesis that "High Volume = Low Cost" (Economies of Scale).
+3.  **Run the Application**
+    ```bash
+    streamlit run app.py
+    ```
 
-Correlation Coefficient: 0.25 (Weak). There is no strong evidence that high-volume hospitals pass savings on to patients.
-
-Urban vs. Rural: Statistical T-Tests confirmed that Urban hospitals charge significantly more (~15% higher) than Rural hospitals for identical procedures (p-value < 0.05).
-<img width="2969" height="2068" alt="7_urban_rural_comparison" src="https://github.com/user-attachments/assets/4f4fdead-7eb6-4700-bda4-5d162eb84bf2" />
-
-4. Conclusion & Recommendations
-The analysis confirms that US healthcare costs are driven less by "medical necessity" and more by geographic location and hospital billing strategies.
+*This project was developed as part of the Data Science Internship (2025).*
