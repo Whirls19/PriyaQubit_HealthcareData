@@ -1,4 +1,4 @@
-# 🏥 Hospital Bed Utilization & Revenue Optimization System
+<img width="1363" height="764" alt="{49363328-B1FE-4844-AEAB-97758A820587}" src="https://github.com/user-attachments/assets/aa1a41d3-a63c-4897-8c8c-fce969d3b2a2" /># 🏥 Hospital Bed Utilization & Revenue Optimization System
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
@@ -65,14 +65,21 @@ A generic ML model that estimates the target discharge date for incoming patient
 * **Input:** Age, Diagnosis, Severity, Admission Type.
 * **Output:** Predicted Stay & Risk Alert (Low/Medium/High).
 * **Safety Layer:** Includes clinical overrides for "Extreme" severity cases to ensure patient safety.
+<img width="1920" height="924" alt="{D9E55A89-1241-4521-8DC5-A2118B63225A}" src="https://github.com/user-attachments/assets/4ce9c2c9-4378-4005-bf9e-4fd73d4fe782" />
+
 
 ### 2. The "Command Center" Dashboard (Tableau)
 An interactive dashboard answering three critical business questions:
 * **Executive View:** Visualizes total revenue opportunity and wasted bed days.
 * **Clinical View:** Drills down into specific diagnoses (e.g., Septicemia, Heart Failure) causing delays.
 * **Technical View:** Validates model performance by comparing Predicted vs. Actual stays.
+  
+<img width="1358" height="767" alt="{3A951AA2-3AE4-4F68-B021-8233E0E9951A}" src="https://github.com/user-attachments/assets/8c5af10b-d412-4de9-8280-c8881cb9cf54" />
+<img width="1362" height="763" alt="{C68FDFB6-6711-41E1-9724-28961AF8A0E7}" src="https://github.com/user-attachments/assets/7280bea5-e840-4398-a58e-5eb43d2acd3a" />
+<img width="1370" height="770" alt="{3A929768-3070-4234-8BB8-043B3E3E5A4A}" src="https://github.com/user-attachments/assets/6657097b-dc53-44ac-99cd-5c17801c3e71" />
 
-### 3. "What-If" Simulation Engine
+
+### 3. What-If Simulation Engine
 A dynamic parameter tool allowing stakeholders to calculate ROI by adjusting efficiency targets (e.g., *"What if we reduce variance by 10%?"*).
 
 ---
