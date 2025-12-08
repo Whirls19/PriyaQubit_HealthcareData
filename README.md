@@ -16,8 +16,7 @@
 - [Key Features](#-key-features)
 - [Tech Stack](#-tech-stack)
 - [Installation & Setup](#-installation--setup)
-- [Usage Guide](#-usage-guide)
-- [Team](#-team)
+
 
 ---
 
