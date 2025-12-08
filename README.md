@@ -1,4 +1,4 @@
-<img width="1363" height="764" alt="{49363328-B1FE-4844-AEAB-97758A820587}" src="https://github.com/user-attachments/assets/aa1a41d3-a63c-4897-8c8c-fce969d3b2a2" /># 🏥 Hospital Bed Utilization & Revenue Optimization System
+# 🏥 Hospital Bed Utilization & Revenue Optimization System
 
 ![Python](https://img.shields.io/badge/Python-3.9%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Streamlit-App-red)
