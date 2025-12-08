@@ -109,7 +109,7 @@ A dynamic parameter tool allowing stakeholders to calculate ROI by adjusting eff
 
 3.  **Run the Application**
     ```bash
-    streamlit run app.py
+    streamlit run stream_db.py
     ```
 
 *This project was developed as part of the Data Science Internship (2025).*
