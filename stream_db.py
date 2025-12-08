@@ -12,7 +12,6 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(page_title="Hospital LOS Analytics", layout="wide")
 
-# YOUR ORIGINAL FEATURE ENGINEERING CODE
 def create_advanced_features(df):
     df_enhanced = df.copy()
     
@@ -133,7 +132,6 @@ def train_enhanced_model():
     with st.spinner("Training model..."):
         df = load_and_clean_data()
         
-        # YOUR ORIGINAL FEATURE ENGINEERING
         df = create_advanced_features(df)
         df, label_encoders = encode_categorical_features(df)
         
@@ -450,3 +448,4 @@ else:
             
         except Exception as e:
             st.error(f"Error: {str(e)}")
+
