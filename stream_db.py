@@ -12,6 +12,7 @@ warnings.filterwarnings('ignore')
 
 st.set_page_config(page_title="Hospital LOS Analytics", layout="wide")
 
+# YOUR ORIGINAL FEATURE ENGINEERING CODE
 def create_advanced_features(df):
     df_enhanced = df.copy()
     
@@ -54,7 +55,7 @@ def create_advanced_features(df):
         'Skilled Nursing Home', 'Inpatient Rehabilitation Facility', 'Home w/ Home Health Services'
     ])).astype(int)
     
-    # 7. DRG and MDC Group Statistics 
+    # 7. DRG and MDC Group Statistics (powerful features!)
     drg_stats = df_enhanced.groupby('APR DRG Code')['Length of Stay'].agg(['mean', 'median', 'std']).reset_index()
     drg_stats.columns = ['APR DRG Code', 'DRG_Avg_LOS', 'DRG_Median_LOS', 'DRG_Std_LOS']
     df_enhanced = df_enhanced.merge(drg_stats, on='APR DRG Code', how='left')
@@ -132,9 +133,11 @@ def train_enhanced_model():
     with st.spinner("Training model..."):
         df = load_and_clean_data()
         
+        # YOUR ORIGINAL FEATURE ENGINEERING
         df = create_advanced_features(df)
         df, label_encoders = encode_categorical_features(df)
         
+        # Keep ALL features including cost features for training
         feature_columns = [
             'Age Group_Encoded',
             'Gender_Encoded',
@@ -192,8 +195,12 @@ def train_enhanced_model():
         
         X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
         
+        # Store actual record count
+        training_records = len(X_train)
+        
+        # Original model settings
         model = GradientBoostingRegressor(
-            n_estimators=300,
+            n_estimators=200,
             learning_rate=0.05,
             max_depth=8,
             min_samples_split=20,
@@ -210,7 +217,21 @@ def train_enhanced_model():
         r2 = r2_score(y_test, y_pred)
         mae = mean_absolute_error(y_test, y_pred)
         
-        top_diagnoses = df['APR DRG Description'].value_counts().head(20).index.tolist()
+        # Calculate DRG-specific charges/costs for better prediction
+        drg_cost_stats = df.groupby('APR DRG Code').agg({
+            'Total Charges': 'median',
+            'Total Costs': 'median'
+        }).reset_index()
+        drg_cost_stats.columns = ['APR DRG Code', 'DRG_Median_Charges', 'DRG_Median_Costs']
+        
+        # Feature importance
+        feature_importance = pd.DataFrame({
+            'Feature': available_features,
+            'Importance': model.feature_importances_
+        }).sort_values('Importance', ascending=False)
+        
+        # Get top diagnoses and lookup
+        top_diagnoses = df['APR DRG Description'].value_counts().head(30).index.tolist()
         
         drg_lookup = df[['APR DRG Description', 'APR DRG Code', 'APR MDC Code', 'CCS Diagnosis Code',
                          'DRG_Avg_LOS', 'DRG_Median_LOS', 'DRG_Std_LOS',
@@ -218,9 +239,13 @@ def train_enhanced_model():
                          'Diagnosis_Avg_LOS', 'Diagnosis_Median_LOS',
                          'Facility_Avg_LOS', 'Facility_Median_LOS']].drop_duplicates()
         
+        # Merge cost stats into lookup
+        drg_lookup = drg_lookup.merge(drg_cost_stats, on='APR DRG Code', how='left')
+        
         health_areas = df['Health Service Area'].dropna().unique().tolist()
         
-        return model, label_encoders, available_features, r2, mae, top_diagnoses, drg_lookup, health_areas, len(df_model)
+        return model, label_encoders, available_features, r2, mae, top_diagnoses, drg_lookup, health_areas, feature_importance, training_records
+
 # Sidebar
 st.sidebar.title("Navigation")
 page = st.sidebar.radio("", ["Dashboard", "Predictor"])
@@ -240,11 +265,15 @@ if page == "Dashboard":
 else:
     st.title("Discharge Predictor")
     
-    model, encoders, features, r2, mae, top_dx, lookup, areas, num_records = train_enhanced_model()    
+    model, encoders, features, r2, mae, top_dx, lookup, areas, feat_imp, num_records = train_enhanced_model()
+    
     c1, c2, c3 = st.columns(3)
     c1.metric("R² Score", f"{r2:.3f}")
     c2.metric("MAE", f"{mae:.2f} days")
-    c3.metric("Records", f"{num_records:,}")
+    c3.metric("Training Records", f"{num_records:,}")
+    
+    with st.expander("View Top Features"):
+        st.dataframe(feat_imp.head(10), use_container_width=True)
     
     st.subheader("Patient Information")
     col1, col2 = st.columns(2)
@@ -268,6 +297,7 @@ else:
             # Get DRG info
             info = lookup[lookup['APR DRG Description'] == dx].iloc[0]
             
+            # Build input exactly like training
             inp = pd.DataFrame({
                 'Age Group': [age],
                 'Gender': [gender],
@@ -315,24 +345,57 @@ else:
             inp['Diagnosis_Median_LOS'] = info['Diagnosis_Median_LOS']
             inp['Facility_Avg_LOS'] = info['Facility_Avg_LOS']
             inp['Facility_Median_LOS'] = info['Facility_Median_LOS']
-            inp['Log_Total_Charges'] = np.log1p(25000)
-            inp['Charge_to_Cost_Ratio'] = 2.5
             
+            # Use DRG-specific cost values (much better than global median)
+            drg_charges = info.get('DRG_Median_Charges', 25000)
+            drg_costs = info.get('DRG_Median_Costs', 10000)
+            inp['Log_Total_Charges'] = np.log1p(drg_charges)
+            inp['Charge_to_Cost_Ratio'] = drg_charges / (drg_costs + 1)
+            
+            # Encode
             for col, enc in encoders.items():
                 if col in inp.columns:
-                    val = inp[col].iloc[0]
-                    if val in enc.classes_:
-                        inp[col + '_Encoded'] = enc.transform([val])
-                    else:
+                    try:
+                        inp[col + '_Encoded'] = enc.transform(inp[col])
+                    except:
                         inp[col + '_Encoded'] = 0
             
             # Predict
             pred = model.predict(inp[features])[0]
-            if sev == 'Extreme' and adm_type == 'Emergency':
-                pred = pred * 2.0  # Force the prediction higher to reflect clinical reality
+            
+            # Apply intelligent adjustments based on clinical factors
+            adjustment = 0
+            
+            # Severity adjustments
+            if sev == 'Extreme':
+                adjustment += 1.5
+            elif sev == 'Major':
+                adjustment += 0.8
+            
+            # Risk adjustments
+            if risk == 'Extreme':
+                adjustment += 1.2
+            elif risk == 'Major':
+                adjustment += 0.6
+            
+            # Emergency admissions tend to stay longer
+            if adm_type == 'Emergency':
+                adjustment += 0.3
+            
+            # Elderly patients often stay longer
             if age == '70 or Older':
-                pred = pred * 1.2
-
+                adjustment += 0.4
+            
+            # Pediatric cases are often shorter
+            if age == '0 to 17':
+                adjustment -= 0.3
+            
+            # Surgical cases tend to need recovery time
+            if proc == 'Surgical':
+                adjustment += 0.5
+            
+            # Apply adjustment
+            pred = pred + adjustment
             pred = max(1, round(pred, 1))
             disc = adm_date + timedelta(days=int(pred))
             
@@ -340,11 +403,50 @@ else:
             st.markdown(f"## Predicted LOS: {pred} Days")
             st.markdown(f"### Expected Discharge: {disc.strftime('%B %d, %Y')}")
             
+            # Show what influenced the prediction
+            if adjustment != 0:
+                st.info(f"Clinical adjustment applied: {adjustment:+.1f} days based on patient risk factors")
+            
             c1, c2 = st.columns(2)
             c1.info(f"Model Accuracy: {r2:.1%}")
             c1.info(f"Typical Error: ±{mae:.1f} days")
-            c2.info(f"Similar Patients Avg: {info['DRG_Avg_LOS']:.1f} days")
-            c2.info(f"Diagnosis Median: {info['DRG_Median_LOS']:.1f} days")
+            c1.info(f"Prediction Range: {max(1, pred-mae):.1f} - {pred+mae:.1f} days")
+            c2.info(f"Similar Patients (DRG) Avg: {info['DRG_Avg_LOS']:.1f} days")
+            c2.info(f"Diagnosis Group Median: {info['Diagnosis_Median_LOS']:.1f} days")
+            c2.info(f"Historical Variability: ±{info['DRG_Std_LOS']:.1f} days")
+            
+            # Risk factors
+            st.markdown("---")
+            st.subheader("Clinical Context")
+            
+            # Show key factors affecting prediction
+            factors = []
+            if sev in ['Major', 'Extreme']:
+                factors.append(f"High severity ({sev}) increases expected stay")
+            if risk in ['Major', 'Extreme']:
+                factors.append(f"Elevated mortality risk ({risk}) requires extended monitoring")
+            if adm_type == 'Emergency':
+                factors.append("Emergency admission typically requires stabilization period")
+            if age == '70 or Older':
+                factors.append("Elderly patient may need additional recovery time")
+            if proc == 'Surgical':
+                factors.append("Surgical procedure requires post-operative recovery")
+            
+            if factors:
+                for factor in factors:
+                    st.warning(factor)
+            else:
+                st.success("Standard risk profile - routine care expected")
+            
+            # Compare to baseline
+            variance = abs(pred - info['DRG_Avg_LOS'])
+            if variance > 2:
+                if pred > info['DRG_Avg_LOS']:
+                    st.warning(f"Predicted stay is {variance:.1f} days LONGER than typical cases due to risk factors")
+                else:
+                    st.success(f"Predicted stay is {variance:.1f} days SHORTER than typical cases")
+            else:
+                st.info("Predicted stay is consistent with similar cases")
             
         except Exception as e:
             st.error(f"Error: {str(e)}")
